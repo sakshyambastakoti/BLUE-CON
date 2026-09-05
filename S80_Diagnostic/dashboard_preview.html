@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DATA FROG S80 • Input Diagnostic Dashboard (Preview & Demo)</title>
+  <style>
+    :root {
+      --bg-dark: #070a12;
+      --bg-panel: #0e1424;
+      --bg-panel-hover: #131c33;
+      --border-color: #1a2744;
+      --border-glow: #243b6b;
+      --accent-cyan: #00f0ff;
+      --accent-green: #00ff66;
+      --accent-red: #ff3366;
+      --accent-yellow: #ffb800;
+      --accent-purple: #9d4edd;
+      --text-main: #f0f4fc;
+      --text-dim: #798ba8;
+      --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 240, 255, 0.08), transparent 70%),
+        linear-gradient(180deg, #070a12 0%, #0a0e1c 100%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 16px;
+      line-height: 1.4;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* HEADER & STATUS BAR */
+    header {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(157,78,221,0.2));
+      border: 1px solid var(--accent-cyan);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-cyan);
+    }
+
+    .brand-icon svg {
+      width: 26px;
+      height: 26px;
+      fill: currentColor;
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-text h1 span {
+      color: var(--accent-cyan);
+    }
+
+    .brand-text p {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+    }
+
+    .telemetry-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .badge {
+      background: rgba(10, 16, 32, 0.8);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-status {
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #444;
+      display: inline-block;
+      transition: all 0.3s;
+    }
+
+    .status-dot.connected {
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+      animation: pulse-green 2s infinite;
+    }
+
+    .status-dot.disconnected {
+      background: var(--accent-red);
+      box-shadow: 0 0 8px var(--accent-red);
+    }
+
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(0, 255, 102, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(0, 255, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 255, 102, 0); }
+    }
+
+    .demo-toggle-btn {
+      background: linear-gradient(135deg, #243b6b, #1a2744);
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .demo-toggle-btn:hover {
+      background: var(--accent-cyan);
+      color: #070a12;
+      box-shadow: 0 0 12px var(--accent-cyan);
+    }
+
+    /* MAIN GRID LAYOUT */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--border-glow);
+    }
+
+    .card-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+    }
+
+    .card-title svg {
+      width: 14px;
+      height: 14px;
+      fill: var(--accent-cyan);
+    }
+
+    /* JOYSTICKS SECTION */
+    .col-sticks {
+      grid-column: span 6;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .col-sticks {
+        grid-column: span 12;
+      }
+    }
+
+    .stick-widget {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stick-visual-container {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      background: #090e1b;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+    }
+
+    .stick-grid {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .stick-grid line {
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 1;
+      stroke-dasharray: 2, 2;
+    }
+
+    .stick-grid circle.deadzone {
+      stroke: rgba(0, 240, 255, 0.2);
+      stroke-width: 1;
+      fill: none;
+      stroke-dasharray: 3, 3;
+    }
+
+    .stick-thumb {
+      position: absolute;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #2a4365, #0f1c30);
+      border: 2px solid var(--accent-cyan);
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.5), inset 0 2px 4px rgba(255,255,255,0.3);
+      transform: translate(0px, 0px);
+      transition: transform 0.05s ease-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .stick-thumb::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 6px var(--accent-cyan);
+    }
+
+    .stick-coords {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      background: rgba(0,0,0,0.4);
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .stick-coords span {
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    .stick-dirs {
+      display: flex;
+      gap: 6px;
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+    }
+
+    .dir-tag {
+      padding: 2px 6px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      color: var(--text-dim);
+      transition: all 0.15s;
+    }
+
+    .dir-tag.active {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+      font-weight: 700;
+    }
+
+    /* TRIGGERS SECTION */
+    .col-triggers {
+      grid-column: span 6;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .col-triggers {
+        grid-column: span 12;
+      }
+    }
+
+    .trigger-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .trigger-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+    }
+
+    .trigger-header .val {
+      color: var(--accent-yellow);
+      font-weight: 700;
+    }
+
+    .progress-bar-bg {
+      height: 24px;
+      background: #090e1b;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff9900, #ffcc00);
+      box-shadow: 0 0 14px rgba(255, 184, 0, 0.6);
+      transition: width 0.05s ease-out;
+    }
+
+    .progress-ticks {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 8px;
+      pointer-events: none;
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.3);
+      font-family: var(--font-mono);
+      align-items: center;
+    }
+
+    /* BUTTONS MATRIX */
+    .col-buttons {
+      grid-column: span 7;
+    }
+
+    @media (max-width: 900px) {
+      .col-buttons {
+        grid-column: span 12;
+      }
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .btn-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .btn-cell {
+      background: rgba(14, 22, 40, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.1s ease;
+    }
+
+    .btn-label {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    .btn-state {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Button Colors when PRESSED */
+    .btn-cell.pressed {
+      transform: translateY(2px);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
+    }
+
+    .btn-cell[data-btn="A"].pressed {
+      background: rgba(0, 255, 102, 0.2);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      box-shadow: 0 0 16px rgba(0, 255, 102, 0.6);
+    }
+    .btn-cell[data-btn="B"].pressed {
+      background: rgba(255, 51, 102, 0.2);
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+      box-shadow: 0 0 16px rgba(255, 51, 102, 0.6);
+    }
+    .btn-cell[data-btn="X"].pressed {
+      background: rgba(0, 240, 255, 0.2);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
+    }
+    .btn-cell[data-btn="Y"].pressed {
+      background: rgba(255, 184, 0, 0.2);
+      border-color: var(--accent-yellow);
+      color: var(--accent-yellow);
+      box-shadow: 0 0 16px rgba(255, 184, 0, 0.6);
+    }
+    .btn-cell[data-btn="L"].pressed, .btn-cell[data-btn="R"].pressed,
+    .btn-cell[data-btn="ZL"].pressed, .btn-cell[data-btn="ZR"].pressed,
+    .btn-cell[data-btn="L3"].pressed, .btn-cell[data-btn="R3"].pressed {
+      background: rgba(157, 78, 221, 0.25);
+      border-color: var(--accent-purple);
+      color: #d8b4fe;
+      box-shadow: 0 0 16px rgba(157, 78, 221, 0.6);
+    }
+
+    .btn-cell.pressed .btn-state {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* D-PAD SECTION */
+    .col-dpad {
+      grid-column: span 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 900px) {
+      .col-dpad {
+        grid-column: span 12;
+      }
+    }
+
+    .dpad-container {
+      display: grid;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(3, 44px);
+      gap: 4px;
+      margin: 10px 0;
+    }
+
+    .dpad-key {
+      background: #090e1b;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--text-dim);
+      transition: all 0.1s;
+    }
+
+    .dpad-key.center {
+      background: #060914;
+      border: 1px dashed rgba(255,255,255,0.06);
+      font-size: 0.6rem;
+    }
+
+    .dpad-key.active {
+      background: rgba(0, 240, 255, 0.2);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+      transform: scale(0.96);
+    }
+
+    .dpad-raw {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      color: var(--text-dim);
+    }
+
+    .dpad-raw span {
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    /* SPECIAL / RAW INPUTS */
+    .col-special {
+      grid-column: span 6;
+    }
+
+    @media (max-width: 900px) {
+      .col-special {
+        grid-column: span 12;
+      }
+    }
+
+    .raw-hex-display {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .hex-box {
+      background: #090e1b;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      font-family: var(--font-mono);
+    }
+
+    .hex-box .label {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .hex-box .value {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+
+    .misc-decoded-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .misc-tag {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      transition: all 0.15s;
+    }
+
+    .misc-tag.active {
+      background: rgba(157, 78, 221, 0.25);
+      border-color: var(--accent-purple);
+      color: #e9d5ff;
+      box-shadow: 0 0 10px rgba(157, 78, 221, 0.5);
+      font-weight: 700;
+    }
+
+    /* RAW DATA MONITOR TABLE */
+    .col-raw-table {
+      grid-column: span 6;
+    }
+
+    @media (max-width: 900px) {
+      .col-raw-table {
+        grid-column: span 12;
+      }
+    }
+
+    .raw-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+    }
+
+    .raw-table tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .raw-table td {
+      padding: 6px 4px;
+    }
+
+    .raw-table td:nth-child(1) {
+      color: var(--text-dim);
+    }
+
+    .raw-table td:nth-child(2) {
+      text-align: right;
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    /* INPUT ACTIVITY MONITOR */
+    .col-activity {
+      grid-column: span 12;
+    }
+
+    .activity-log {
+      height: 130px;
+      overflow-y: auto;
+      background: #080c16;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 6px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
+    }
+
+    .log-item {
+      display: flex;
+      gap: 12px;
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-time {
+      color: var(--text-dim);
+      font-size: 0.7rem;
+    }
+
+    .log-event {
+      color: var(--text-main);
+    }
+
+    .log-event.highlight {
+      color: var(--accent-green);
+      font-weight: 700;
+    }
+
+    .clear-log-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-dim);
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .clear-log-btn:hover {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      padding: 8px;
+      font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HEADER -->
+    <header>
+      <div class="brand-group">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>DATA FROG <span>S80</span></h1>
+          <p>ESP32 Real-Time Diagnostic Dashboard • Bluepad32</p>
+        </div>
+      </div>
+
+      <div class="telemetry-bar">
+        <button id="demo-btn" class="demo-toggle-btn" onclick="toggleDemoMode()">START DEMO SIMULATION</button>
+        <div class="badge">
+          <span id="status-dot" class="status-dot disconnected"></span>
+          <span id="conn-status" class="badge-status" style="color:var(--accent-red)">DISCONNECTED</span>
+        </div>
+        <div class="badge">
+          CONTROLLER: <span id="ctl-name" style="color:var(--accent-cyan)">NONE</span>
+        </div>
+        <div class="badge">
+          INDEX: <span id="ctl-index" style="color:var(--accent-yellow)">-</span>
+        </div>
+        <div class="badge">
+          RATE: <span id="telemetry-fps" style="color:var(--accent-green)">0 Hz</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- DASHBOARD CONTENT -->
+    <div class="dashboard-grid">
+
+      <!-- DUAL JOYSTICKS -->
+      <div class="card col-sticks">
+        <!-- LEFT STICK -->
+        <div class="stick-widget">
+          <div class="card-title" style="width:100%">
+            <span>LEFT STICK</span>
+            <span id="l-dir-state" style="color:var(--accent-cyan); font-size:0.7rem;">CENTER</span>
+          </div>
+          <div class="stick-visual-container">
+            <svg class="stick-grid" viewBox="0 0 160 160">
+              <line x1="80" y1="0" x2="80" y2="160" />
+              <line x1="0" y1="80" x2="160" y2="80" />
+              <circle cx="80" cy="80" r="16" class="deadzone" />
+            </svg>
+            <div id="left-thumb" class="stick-thumb"></div>
+          </div>
+          <div class="stick-coords">
+            <div>X: <span id="val-lx">0</span></div>
+            <div>Y: <span id="val-ly">0</span></div>
+          </div>
+          <div class="stick-dirs">
+            <div id="dir-l-up" class="dir-tag">UP</div>
+            <div id="dir-l-down" class="dir-tag">DOWN</div>
+            <div id="dir-l-left" class="dir-tag">LEFT</div>
+            <div id="dir-l-right" class="dir-tag">RIGHT</div>
+            <div id="dir-l-center" class="dir-tag active">CENTER</div>
+          </div>
+        </div>
+
+        <!-- RIGHT STICK -->
+        <div class="stick-widget">
+          <div class="card-title" style="width:100%">
+            <span>RIGHT STICK</span>
+            <span id="r-dir-state" style="color:var(--accent-cyan); font-size:0.7rem;">CENTER</span>
+          </div>
+          <div class="stick-visual-container">
+            <svg class="stick-grid" viewBox="0 0 160 160">
+              <line x1="80" y1="0" x2="80" y2="160" />
+              <line x1="0" y1="80" x2="160" y2="80" />
+              <circle cx="80" cy="80" r="16" class="deadzone" />
+            </svg>
+            <div id="right-thumb" class="stick-thumb"></div>
+          </div>
+          <div class="stick-coords">
+            <div>X: <span id="val-rx">0</span></div>
+            <div>Y: <span id="val-ry">0</span></div>
+          </div>
+          <div class="stick-dirs">
+            <div id="dir-r-up" class="dir-tag">UP</div>
+            <div id="dir-r-down" class="dir-tag">DOWN</div>
+            <div id="dir-r-left" class="dir-tag">LEFT</div>
+            <div id="dir-r-right" class="dir-tag">RIGHT</div>
+            <div id="dir-r-center" class="dir-tag active">CENTER</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRIGGERS -->
+      <div class="card col-triggers">
+        <div class="card-title">
+          <span>ANALOG TRIGGERS</span>
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </div>
+
+        <!-- ZL / BRAKE -->
+        <div class="trigger-item">
+          <div class="trigger-header">
+            <span>ZL / BRAKE</span>
+            <span>VALUE: <span id="val-zl" class="val">0</span> / 1020</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="bar-zl" class="progress-bar-fill"></div>
+            <div class="progress-ticks">
+              <span>0</span>
+              <span>255</span>
+              <span>512</span>
+              <span>768</span>
+              <span>1020</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ZR / THROTTLE -->
+        <div class="trigger-item">
+          <div class="trigger-header">
+            <span>ZR / THROTTLE</span>
+            <span>VALUE: <span id="val-zr" class="val">0</span> / 1020</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="bar-zr" class="progress-bar-fill"></div>
+            <div class="progress-ticks">
+              <span>0</span>
+              <span>255</span>
+              <span>512</span>
+              <span>768</span>
+              <span>1020</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN BUTTONS -->
+      <div class="card col-buttons">
+        <div class="card-title">
+          <span>MAIN BUTTONS</span>
+          <span style="font-size:0.68rem; font-family:var(--font-mono); color:var(--text-dim)">REAL-TIME TACTILE MATRIX</span>
+        </div>
+        <div class="btn-grid">
+          <div class="btn-cell" data-btn="A" id="btn-a">
+            <div class="btn-label">A</div>
+            <div class="btn-state" id="lbl-a">RELEASED</div>
+          </div>
+          <div class="btn-cell" data-btn="B" id="btn-b">
+            <div class="btn-label">B</div>
+            <div class="btn-state" id="lbl-b">RELEASED</div>
+          </div>
+          <div class="btn-cell" data-btn="X" id="btn-x">
+            <div class="btn-label">X</div>
+            <div class="btn-state" id="lbl-x">RELEASED</div>
+          </div>
+          <div class="btn-cell" data-btn="Y" id="btn-y">
+            <div class="btn-label">Y</div>
+            <div class="btn-state" id="lbl-y">RELEASED</div>
+          </div>
+          <div class="btn-cell" data-btn="L" id="btn-l1">
+            <div class="btn-label">L</div>
+            <div class="btn-state" id="lbl-l1">RELEASED</div>
+          </div>
+          <div class="btn-cell" data-btn="R" id="btn-r1">
+            <div class="btn-label">R</div>
+            <div class="btn-state" id="lbl-r1">RELEASED</div>
+          </div>
+          <div class="btn-cell" data-btn="ZL" id="btn-l2">
+            <div class="btn-label">ZL</div>
+            <div class="btn-state" id="lbl-l2">RELEASED</div>
+          </div>
+          <div class="btn-cell" data-btn="ZR" id="btn-r2">
+            <div class="btn-label">ZR</div>
+            <div class="btn-state" id="lbl-r2">RELEASED</div>
+          </div>
+          <div class="btn-cell" data-btn="L3" id="btn-l3">
+            <div class="btn-label">L3</div>
+            <div class="btn-state" id="lbl-l3">RELEASED</div>
+          </div>
+          <div class="btn-cell" data-btn="R3" id="btn-r3">
+            <div class="btn-label">R3</div>
+            <div class="btn-state" id="lbl-r3">RELEASED</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D-PAD -->
+      <div class="card col-dpad">
+        <div class="card-title" style="width:100%">
+          <span>D-PAD</span>
+          <span style="font-size:0.68rem; font-family:var(--font-mono); color:var(--text-dim)">HAT SWITCH</span>
+        </div>
+
+        <div class="dpad-container">
+          <div></div>
+          <div class="dpad-key" id="dpad-up">▲</div>
+          <div></div>
+
+          <div class="dpad-key" id="dpad-left">◀</div>
+          <div class="dpad-key center">•</div>
+          <div class="dpad-key" id="dpad-right">▶</div>
+
+          <div></div>
+          <div class="dpad-key" id="dpad-down">▼</div>
+          <div></div>
+        </div>
+
+        <div class="dpad-raw">
+          D-PAD RAW: <span id="val-dpad-hex">0x00</span>
+        </div>
+      </div>
+
+      <!-- SPECIAL / RAW INPUTS -->
+      <div class="card col-special">
+        <div class="card-title">
+          <span>SPECIAL / RAW INPUTS</span>
+          <span style="font-size:0.68rem; font-family:var(--font-mono); color:var(--text-dim)">BITMASK DECODER</span>
+        </div>
+
+        <div class="raw-hex-display">
+          <div class="hex-box">
+            <div class="label">buttons()</div>
+            <div class="value" id="hex-buttons">0x0000</div>
+          </div>
+          <div class="hex-box">
+            <div class="label">miscButtons()</div>
+            <div class="value" id="hex-misc">0x0000</div>
+          </div>
+          <div class="hex-box">
+            <div class="label">dpad()</div>
+            <div class="value" id="hex-dpad">0x00</div>
+          </div>
+        </div>
+
+        <div class="misc-decoded-tags">
+          <div class="misc-tag" id="tag-home">HOME</div>
+          <div class="misc-tag" id="tag-capture">CAPTURE</div>
+          <div class="misc-tag" id="tag-plus">+ (START)</div>
+          <div class="misc-tag" id="tag-minus">- (SELECT)</div>
+          <div class="misc-tag" id="tag-turbo">TURBO</div>
+          <div class="misc-tag" id="tag-sync">SYNC</div>
+        </div>
+      </div>
+
+      <!-- RAW DATA MONITOR TABLE -->
+      <div class="card col-raw-table">
+        <div class="card-title">
+          <span>RAW CONTROLLER DATA</span>
+          <span style="font-size:0.68rem; font-family:var(--font-mono); color:var(--text-dim)">LIVE REGISTERS</span>
+        </div>
+        <table class="raw-table">
+          <tbody>
+            <tr><td>BUTTONS</td><td id="tbl-buttons">0x0000</td></tr>
+            <tr><td>MISC BUTTONS</td><td id="tbl-misc">0x00</td></tr>
+            <tr><td>D-PAD</td><td id="tbl-dpad">0x00</td></tr>
+            <tr><td>LEFT X</td><td id="tbl-lx">0</td></tr>
+            <tr><td>LEFT Y</td><td id="tbl-ly">0</td></tr>
+            <tr><td>RIGHT X</td><td id="tbl-rx">0</td></tr>
+            <tr><td>RIGHT Y</td><td id="tbl-ry">0</td></tr>
+            <tr><td>BRAKE / ZL</td><td id="tbl-zl">0</td></tr>
+            <tr><td>THROTTLE / ZR</td><td id="tbl-zr">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- INPUT ACTIVITY MONITOR -->
+      <div class="card col-activity">
+        <div class="card-title">
+          <span>INPUT ACTIVITY MONITOR</span>
+          <button class="clear-log-btn" id="btn-clear-log">CLEAR LOG</button>
+        </div>
+        <div class="activity-log" id="activity-log">
+          <div class="log-item">
+            <span class="log-time">--:--:--</span>
+            <span class="log-event">Diagnostic system initialized. Click "START DEMO SIMULATION" or connect to ESP32.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      ESP32 CLASSIC &bull; DATA FROG S80 DIAGNOSTIC &bull; BLUEPAD32 &bull; WEBSOCKET ACTIVE
+    </footer>
+  </div>
+
+  <script>
+    // WebSocket Client or Demo Simulation
+    const WS_URL = `ws://${window.location.hostname || '192.168.4.1'}:81/`;
+    let socket = null;
+    let frameCount = 0;
+    let lastFpsTime = performance.now();
+    let prevState = null;
+    let demoInterval = null;
+    let demoTime = 0;
+
+    function toggleDemoMode() {
+      const btn = document.getElementById('demo-btn');
+      if (demoInterval) {
+        clearInterval(demoInterval);
+        demoInterval = null;
+        btn.textContent = 'START DEMO SIMULATION';
+        btn.style.background = '';
+        updateConnStatus(false, 'NONE', '-');
+        logEvent('Demo simulation stopped.', false);
+      } else {
+        if (socket) socket.close();
+        btn.textContent = 'STOP DEMO SIMULATION';
+        btn.style.background = 'var(--accent-cyan)';
+        btn.style.color = '#070a12';
+        logEvent('Demo simulation running at 33 Hz...', true);
+        demoInterval = setInterval(runDemoTick, 30);
+      }
+    }
+
+    function runDemoTick() {
+      demoTime += 0.05;
+      const lx = Math.round(Math.sin(demoTime) * 480);
+      const ly = Math.round(Math.cos(demoTime) * 480);
+      const rx = Math.round(Math.cos(demoTime * 0.7) * 350);
+      const ry = Math.round(Math.sin(demoTime * 0.7) * 350);
+      const zl = Math.round((Math.sin(demoTime * 1.2) + 1) * 510);
+      const zr = Math.round((Math.cos(demoTime * 1.5) + 1) * 510);
+
+      const a = (Math.floor(demoTime * 2) % 4 === 0);
+      const b = (Math.floor(demoTime * 2) % 4 === 1);
+      const x = (Math.floor(demoTime * 2) % 4 === 2);
+      const y = (Math.floor(demoTime * 2) % 4 === 3);
+
+      const dpadIdx = Math.floor(demoTime) % 5;
+      const dpadValues = [0x00, 0x01, 0x04, 0x02, 0x08];
+      const dpad = dpadValues[dpadIdx];
+
+      const btn = (a ? 0x0001 : 0) | (b ? 0x0002 : 0) | (x ? 0x0004 : 0) | (y ? 0x0008 : 0);
+      const misc = (Math.floor(demoTime * 0.5) % 2 === 0) ? 0x0001 : 0x0000;
+
+      const simData = {
+        c: 1,
+        idx: 0,
+        name: "DATA FROG S80 (DEMO)",
+        lx, ly, rx, ry,
+        zl, zr,
+        btn, misc, dpad,
+        a, b, x, y,
+        l1: false, r1: false, l2: zl > 200, r2: zr > 200,
+        l3: false, r3: false
+      };
+
+      updateDashboard(simData);
+      detectEvents(simData);
+      calcFPS();
+    }
+
+    // Connect WebSocket
+    function connectWS() {
+      if (demoInterval) return;
+      try {
+        socket = new WebSocket(WS_URL);
+
+        socket.onopen = () => {
+          logEvent('WebSocket connected to ESP32', true);
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            updateDashboard(data);
+            detectEvents(data);
+            calcFPS();
+          } catch (e) {
+            console.error('JSON parse error', e);
+          }
+        };
+
+        socket.onclose = () => {
+          if (!demoInterval) {
+            updateConnStatus(false, 'NONE', '-');
+            setTimeout(connectWS, 2000);
+          }
+        };
+
+        socket.onerror = () => {
+          if (socket) socket.close();
+        };
+      } catch (e) {
+        // Local file execution or offline
+      }
+    }
+
+    // Calculate Telemetry Hz
+    function calcFPS() {
+      frameCount++;
+      const now = performance.now();
+      if (now - lastFpsTime >= 1000) {
+        const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
+        document.getElementById('telemetry-fps').textContent = `${fps} Hz`;
+        frameCount = 0;
+        lastFpsTime = now;
+      }
+    }
+
+    // Update Connection Indicators
+    function updateConnStatus(connected, name, idx) {
+      const dot = document.getElementById('status-dot');
+      const text = document.getElementById('conn-status');
+      const ctlName = document.getElementById('ctl-name');
+      const ctlIdx = document.getElementById('ctl-index');
+
+      if (connected) {
+        dot.className = 'status-dot connected';
+        text.textContent = 'CONNECTED';
+        text.style.color = 'var(--accent-green)';
+        ctlName.textContent = name || 'DATA FROG S80';
+        ctlIdx.textContent = idx !== undefined ? idx : '0';
+      } else {
+        dot.className = 'status-dot disconnected';
+        text.textContent = 'DISCONNECTED';
+        text.style.color = 'var(--accent-red)';
+        ctlName.textContent = 'NONE';
+        ctlIdx.textContent = '-';
+        document.getElementById('telemetry-fps').textContent = '0 Hz';
+      }
+    }
+
+    function updateBtn(btnId, lblId, isPressed) {
+      const el = document.getElementById(btnId);
+      const lbl = document.getElementById(lblId);
+      if (isPressed) {
+        el.classList.add('pressed');
+        lbl.textContent = 'ON';
+      } else {
+        el.classList.remove('pressed');
+        lbl.textContent = 'OFF';
+      }
+    }
+
+    function updateDashboard(data) {
+      updateConnStatus(data.c === 1, data.name, data.idx);
+
+      if (data.c !== 1) return;
+
+      const MAX_OFFSET = 50;
+      const lxOffset = (data.lx / 512) * MAX_OFFSET;
+      const lyOffset = (data.ly / 512) * MAX_OFFSET;
+      document.getElementById('left-thumb').style.transform = `translate(${lxOffset}px, ${lyOffset}px)`;
+      document.getElementById('val-lx').textContent = data.lx;
+      document.getElementById('val-ly').textContent = data.ly;
+
+      const rxOffset = (data.rx / 512) * MAX_OFFSET;
+      const ryOffset = (data.ry / 512) * MAX_OFFSET;
+      document.getElementById('right-thumb').style.transform = `translate(${rxOffset}px, ${ryOffset}px)`;
+      document.getElementById('val-rx').textContent = data.rx;
+      document.getElementById('val-ry').textContent = data.ry;
+
+      updateStickDirs('l', data.lx, data.ly);
+      updateStickDirs('r', data.rx, data.ry);
+
+      const zlPercent = Math.min(100, Math.max(0, (data.zl / 1020) * 100));
+      const zrPercent = Math.min(100, Math.max(0, (data.zr / 1020) * 100));
+      document.getElementById('bar-zl').style.width = `${zlPercent}%`;
+      document.getElementById('val-zl').textContent = data.zl;
+      document.getElementById('bar-zr').style.width = `${zrPercent}%`;
+      document.getElementById('val-zr').textContent = data.zr;
+
+      updateBtn('btn-a', 'lbl-a', data.a);
+      updateBtn('btn-b', 'lbl-b', data.b);
+      updateBtn('btn-x', 'lbl-x', data.x);
+      updateBtn('btn-y', 'lbl-y', data.y);
+      updateBtn('btn-l1', 'lbl-l1', data.l1);
+      updateBtn('btn-r1', 'lbl-r1', data.r1);
+      updateBtn('btn-l2', 'lbl-l2', data.l2);
+      updateBtn('btn-r2', 'lbl-r2', data.r2);
+      updateBtn('btn-l3', 'lbl-l3', data.l3);
+      updateBtn('btn-r3', 'lbl-r3', data.r3);
+
+      const dpad = data.dpad || 0;
+      toggleDpadKey('dpad-up', (dpad & 0x01) !== 0);
+      toggleDpadKey('dpad-down', (dpad & 0x02) !== 0);
+      toggleDpadKey('dpad-right', (dpad & 0x04) !== 0);
+      toggleDpadKey('dpad-left', (dpad & 0x08) !== 0);
+      const dpadHexStr = '0x' + dpad.toString(16).toUpperCase().padStart(2, '0');
+      document.getElementById('val-dpad-hex').textContent = dpadHexStr;
+
+      const btnHex = '0x' + (data.btn || 0).toString(16).toUpperCase().padStart(4, '0');
+      const miscHex = '0x' + (data.misc || 0).toString(16).toUpperCase().padStart(4, '0');
+      document.getElementById('hex-buttons').textContent = btnHex;
+      document.getElementById('hex-misc').textContent = miscHex;
+      document.getElementById('hex-dpad').textContent = dpadHexStr;
+
+      const misc = data.misc || 0;
+      toggleTag('tag-home', (misc & 0x0001) !== 0 || (misc & 0x0010) !== 0);
+      toggleTag('tag-minus', (misc & 0x0002) !== 0);
+      toggleTag('tag-plus', (misc & 0x0004) !== 0);
+      toggleTag('tag-capture', (misc & 0x0008) !== 0);
+
+      document.getElementById('tbl-buttons').textContent = btnHex;
+      document.getElementById('tbl-misc').textContent = '0x' + (data.misc || 0).toString(16).toUpperCase().padStart(2, '0');
+      document.getElementById('tbl-dpad').textContent = dpadHexStr;
+      document.getElementById('tbl-lx').textContent = data.lx;
+      document.getElementById('tbl-ly').textContent = data.ly;
+      document.getElementById('tbl-rx').textContent = data.rx;
+      document.getElementById('tbl-ry').textContent = data.ry;
+      document.getElementById('tbl-zl').textContent = data.zl;
+      document.getElementById('tbl-zr').textContent = data.zr;
+    }
+
+    function toggleTag(tagId, active) {
+      const el = document.getElementById(tagId);
+      if (active) el.classList.add('active');
+      else el.classList.remove('active');
+    }
+
+    function toggleDpadKey(id, active) {
+      const el = document.getElementById(id);
+      if (active) el.classList.add('active');
+      else el.classList.remove('active');
+    }
+
+    function updateStickDirs(prefix, x, y) {
+      const DEADZONE = 120;
+      const isUp = y < -DEADZONE;
+      const isDown = y > DEADZONE;
+      const isLeft = x < -DEADZONE;
+      const isRight = x > DEADZONE;
+      const isCenter = !isUp && !isDown && !isLeft && !isRight;
+
+      toggleTag(`dir-${prefix}-up`, isUp);
+      toggleTag(`dir-${prefix}-down`, isDown);
+      toggleTag(`dir-${prefix}-left`, isLeft);
+      toggleTag(`dir-${prefix}-right`, isRight);
+      toggleTag(`dir-${prefix}-center`, isCenter);
+
+      let label = [];
+      if (isUp) label.push('UP');
+      if (isDown) label.push('DOWN');
+      if (isLeft) label.push('LEFT');
+      if (isRight) label.push('RIGHT');
+      if (label.length === 0) label.push('CENTER');
+      document.getElementById(`${prefix}-dir-state`).textContent = label.join(' + ');
+    }
+
+    function detectEvents(curr) {
+      if (!prevState) {
+        prevState = curr;
+        return;
+      }
+
+      const buttons = [
+        ['a', 'A'], ['b', 'B'], ['x', 'X'], ['y', 'Y'],
+        ['l1', 'L'], ['r1', 'R'], ['l2', 'ZL'], ['r2', 'ZR'],
+        ['l3', 'L3'], ['r3', 'R3']
+      ];
+
+      buttons.forEach(([prop, name]) => {
+        if (!prevState[prop] && curr[prop]) {
+          logEvent(`${name} PRESSED`, true);
+        } else if (prevState[prop] && !curr[prop]) {
+          logEvent(`${name} RELEASED`, false);
+        }
+      });
+
+      if (curr.dpad !== prevState.dpad) {
+        if (curr.dpad !== 0) {
+          let dirs = [];
+          if (curr.dpad & 0x01) dirs.push('UP');
+          if (curr.dpad & 0x02) dirs.push('DOWN');
+          if (curr.dpad & 0x04) dirs.push('RIGHT');
+          if (curr.dpad & 0x08) dirs.push('LEFT');
+          logEvent(`D-PAD ${dirs.join('+')} (0x${curr.dpad.toString(16).toUpperCase()})`, true);
+        } else {
+          logEvent(`D-PAD RELEASED`, false);
+        }
+      }
+
+      if (curr.misc !== prevState.misc) {
+        logEvent(`MISC CHANGED: 0x${curr.misc.toString(16).toUpperCase()}`, true);
+      }
+
+      if (Math.abs(curr.zl - prevState.zl) > 100) {
+        logEvent(`ZL = ${curr.zl}`, false);
+      }
+      if (Math.abs(curr.zr - prevState.zr) > 100) {
+        logEvent(`ZR = ${curr.zr}`, false);
+      }
+
+      prevState = curr;
+    }
+
+    function logEvent(msg, highlight) {
+      const log = document.getElementById('activity-log');
+      const item = document.createElement('div');
+      item.className = 'log-item';
+
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0').slice(0, 2);
+
+      item.innerHTML = `
+        <span class="log-time">${timeStr}</span>
+        <span class="log-event ${highlight ? 'highlight' : ''}">${msg}</span>
+      `;
+
+      log.insertBefore(item, log.firstChild);
+
+      while (log.children.length > 25) {
+        log.removeChild(log.lastChild);
+      }
+    }
+
+    document.getElementById('btn-clear-log').addEventListener('click', () => {
+      document.getElementById('activity-log').innerHTML = '';
+      logEvent('Log cleared', false);
+    });
+
+    window.addEventListener('DOMContentLoaded', connectWS);
+  </script>
+</body>
+</html>
