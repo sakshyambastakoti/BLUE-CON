@@ -11,353 +11,435 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
   <title>DATA FROG S80 • Technical Input Diagnostic</title>
   <style>
     :root {
-      --bg-pure: #000000;
-      --bg-surface: #0a0a0a;
-      --bg-card: #111111;
-      --bg-card-alt: #161616;
-      --border-light: #222222;
-      --border-focus: #444444;
-      --border-bright: #ffffff;
-      --text-main: #ffffff;
-      --text-muted: #888888;
-      --text-dim: #555555;
-      --active-white: #ffffff;
-      --active-black: #000000;
+      --bg-body: #f1f5f9;
+      --bg-panel: #ffffff;
+      --bg-subtle: #f8fafc;
+      --border-light: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --border-focus: #94a3b8;
+      
+      --text-main: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+      
+      --accent-orange: #ea580c;
+      --accent-orange-bright: #f97316;
+      --accent-yellow: #d97706;
+      --accent-yellow-bright: #f59e0b;
+      --accent-red: #dc2626;
+      --accent-green: #16a34a;
+      
       --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      border-radius: 0 !important; /* STRICT SHARP EDGES */
+      border-radius: 0;
       user-select: none;
     }
 
-    body {
-      background-color: var(--bg-pure);
+    /* FULL VIEWPORT SINGLE FRAME CONTAINER (NO SCROLLING ON DESKTOP) */
+    html, body {
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      background-color: var(--bg-body);
       color: var(--text-main);
       font-family: var(--font-mono);
-      min-height: 100vh;
-      padding: 24px;
-      line-height: 1.4;
+      padding: 8px 12px;
       -webkit-font-smoothing: antialiased;
     }
 
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    @media (max-height: 620px), (max-width: 900px) {
+      html, body {
+        height: auto;
+        overflow-y: auto;
+      }
     }
 
-    /* TOP INSTRUMENT BAR */
-    header {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-light);
-      padding: 16px 20px;
+    .container {
+      width: 100%;
+      max-width: 100%; /* Span full edge-to-edge space */
+      height: 100%;
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* COMPACT INSTRUMENT HEADER */
+    header {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dark);
+      padding: 6px 14px;
+      display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
+      height: 44px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     }
 
     .brand-section {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
     }
 
     .brand-mark {
-      width: 32px;
-      height: 32px;
-      background: #ffffff;
-      color: #000000;
+      width: 28px;
+      height: 28px;
+      background: var(--accent-orange);
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 900;
-      font-size: 1rem;
-      letter-spacing: -1px;
+      font-size: 0.85rem;
     }
 
     .brand-titles h1 {
-      font-size: 1rem;
+      font-size: 0.9rem;
       text-transform: uppercase;
-      letter-spacing: 2px;
-      font-weight: 700;
+      letter-spacing: 1px;
+      font-weight: 800;
       color: var(--text-main);
-    }
-
-    .brand-titles p {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .telemetry-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .status-badge {
-      border: 1px solid var(--border-light);
-      background: var(--bg-card);
-      padding: 6px 12px;
-      font-size: 0.72rem;
-      letter-spacing: 1px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
+    .brand-titles h1 span {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .telemetry-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .status-badge {
+      border: 1px solid var(--border-dark);
+      background: var(--bg-subtle);
+      padding: 4px 10px;
+      font-size: 0.68rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
     .status-badge .indicator {
-      width: 8px;
-      height: 8px;
-      display: inline-block;
-      background: #333333;
+      width: 7px;
+      height: 7px;
+      background: #cbd5e1;
     }
 
     .status-badge .indicator.connected {
-      background: #ffffff;
-      box-shadow: 0 0 6px #ffffff;
+      background: var(--accent-green);
+      box-shadow: 0 0 5px rgba(22, 163, 74, 0.6);
     }
 
     .status-badge .indicator.disconnected {
-      background: #444444;
+      background: var(--accent-red);
     }
 
-    /* ACTION BUTTONS (DOWNLOAD & PRINT) */
+    /* ACTION BUTTONS */
     .btn-action {
-      background: #ffffff;
-      color: #000000;
-      border: 1px solid #ffffff;
-      padding: 6px 14px;
+      background: var(--accent-orange);
+      color: #ffffff;
+      border: 1px solid var(--accent-orange);
+      padding: 5px 12px;
       font-family: var(--font-mono);
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      letter-spacing: 1px;
       text-transform: uppercase;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
-      transition: background 0.15s, color 0.15s;
+      gap: 4px;
+      transition: all 0.15s;
     }
 
     .btn-action:hover {
-      background: #000000;
-      color: #ffffff;
+      background: #c2410c;
     }
 
     .btn-action.secondary {
-      background: transparent;
-      color: #ffffff;
-      border: 1px solid var(--border-focus);
+      background: #ffffff;
+      color: var(--text-main);
+      border: 1px solid var(--border-dark);
     }
 
     .btn-action.secondary:hover {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
+      background: var(--bg-subtle);
+      border-color: var(--text-main);
     }
 
-    /* GRID ARCHITECTURE */
-    .grid-layout {
+    /* SINGLE-FRAME GRID (2 BALANCED ROWS FILLING 100% REMAINING HEIGHT) */
+    .dashboard-deck {
+      flex: 1;
+      min-height: 0;
       display: grid;
       grid-template-columns: repeat(12, 1fr);
-      gap: 16px;
-    }
-
-    .panel {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-light);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .panel-header {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border-light);
-      padding-bottom: 8px;
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .panel-header span.val {
-      color: var(--text-main);
-      font-weight: 700;
-    }
-
-    /* JOYSTICKS SECTION */
-    .col-sticks {
-      grid-column: span 6;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      grid-template-rows: 1.15fr 0.85fr;
+      gap: 8px;
     }
 
     @media (max-width: 900px) {
-      .col-sticks {
-        grid-column: span 12;
+      .dashboard-deck {
+        display: flex;
+        flex-direction: column;
+        flex: none;
       }
     }
 
-    .stick-block {
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dark);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .panel-header span.val {
+      color: var(--accent-orange);
+      font-weight: 800;
+    }
+
+    /* ROW 1: JOYSTICKS (SPAN 4) */
+    .panel-joysticks {
+      grid-column: span 4;
+    }
+
+    .joysticks-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      height: 100%;
+      align-items: center;
+    }
+
+    .stick-widget {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
+      height: 100%;
+      justify-content: space-between;
+    }
+
+    .stick-title-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: var(--text-muted);
     }
 
     .stick-canvas-box {
-      width: 160px;
-      height: 160px;
-      border: 1px solid var(--border-focus);
-      background: var(--bg-pure);
+      width: 114px;
+      height: 114px;
+      border-radius: 50% !important; /* STRICT CIRCLE */
+      border: 2px solid var(--border-dark);
+      background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f8fafc 100%);
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.05);
+      flex-shrink: 0;
     }
 
-    .stick-crosshair-h {
+    .stick-svg-grid {
       position: absolute;
-      left: 0;
-      top: 50%;
       width: 100%;
-      height: 1px;
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    .stick-crosshair-v {
-      position: absolute;
-      top: 0;
-      left: 50%;
       height: 100%;
-      width: 1px;
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    .stick-deadzone-box {
-      position: absolute;
-      width: 32px;
-      height: 32px;
-      border: 1px dashed rgba(255, 255, 255, 0.2);
+      pointer-events: none;
     }
 
     .stick-pointer {
       position: absolute;
-      width: 20px;
-      height: 20px;
-      background: #ffffff;
-      border: 1px solid #ffffff;
+      width: 24px;
+      height: 24px;
+      border-radius: 50% !important; /* CIRCULAR POINTER */
+      background: radial-gradient(circle at 35% 35%, #ea580c, #c2410c);
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4);
       transform: translate(0px, 0px);
-      transition: transform 0.04s linear;
+      transition: transform 0.03s linear;
       display: flex;
       align-items: center;
       justify-content: center;
       pointer-events: none;
+      z-index: 2;
     }
 
     .stick-pointer::after {
       content: "";
       width: 4px;
       height: 4px;
-      background: #000000;
+      border-radius: 50% !important;
+      background: #ffffff;
     }
 
     .stick-data-row {
       width: 100%;
       display: flex;
       justify-content: space-between;
-      font-size: 0.75rem;
+      font-size: 0.68rem;
       border: 1px solid var(--border-light);
-      padding: 6px 10px;
-      background: var(--bg-card);
+      padding: 3px 8px;
+      background: var(--bg-subtle);
     }
 
     .stick-data-row span.num {
-      color: #ffffff;
-      font-weight: 700;
+      color: var(--accent-orange);
+      font-weight: 800;
     }
 
     .stick-directions {
       display: flex;
-      gap: 4px;
-      font-size: 0.62rem;
+      gap: 2px;
+      font-size: 0.58rem;
     }
 
     .dir-pill {
-      padding: 2px 6px;
-      border: 1px solid var(--border-light);
+      padding: 1px 4px;
+      border: 1px solid var(--border-dark);
+      background: #ffffff;
       color: var(--text-dim);
+      font-weight: 600;
     }
 
     .dir-pill.active {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
+      background: var(--accent-orange);
+      color: #ffffff;
+      border-color: var(--accent-orange);
       font-weight: 700;
     }
 
-    /* TRIGGERS SECTION */
-    .col-triggers {
-      grid-column: span 6;
+    /* CENTER CONTROLS (BUTTONS & TRIGGERS COMBINED, SPAN 5) */
+    .panel-center {
+      grid-column: span 5;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      justify-content: space-between;
+      gap: 8px;
     }
 
-    @media (max-width: 900px) {
-      .col-triggers {
-        grid-column: span 12;
-      }
+    .button-matrix {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
     }
 
-    .trigger-item {
+    .btn-key {
+      background: #ffffff;
+      border: 1px solid var(--border-dark);
+      padding: 6px 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.08s;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+    }
+
+    .btn-key .name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1;
+    }
+
+    .btn-key .sub {
+      font-size: 0.55rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .btn-key[data-name="A"].pressed { background: var(--accent-green); border-color: var(--accent-green); }
+    .btn-key[data-name="B"].pressed { background: var(--accent-red); border-color: var(--accent-red); }
+    .btn-key[data-name="X"].pressed { background: #0284c7; border-color: #0284c7; }
+    .btn-key[data-name="Y"].pressed { background: var(--accent-yellow); border-color: var(--accent-yellow); }
+    .btn-key[data-name="L"].pressed, .btn-key[data-name="R"].pressed,
+    .btn-key[data-name="ZL"].pressed, .btn-key[data-name="ZR"].pressed,
+    .btn-key[data-name="L3"].pressed, .btn-key[data-name="R3"].pressed {
+      background: var(--accent-orange);
+      border-color: var(--accent-orange);
+    }
+    .btn-key.pressed .name, .btn-key.pressed .sub { color: #ffffff !important; }
+
+    /* INTEGRATED TRIGGERS */
+    .triggers-subpanel {
+      border-top: 1px solid var(--border-light);
+      padding-top: 6px;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
 
-    .trigger-labels {
+    .trigger-unit {
       display: flex;
-      justify-content: space-between;
-      font-size: 0.72rem;
+      flex-direction: column;
+      gap: 3px;
     }
 
-    .trigger-labels .t-val {
-      color: #ffffff;
+    .trigger-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
       font-weight: 700;
     }
 
+    .trigger-head span.t-val {
+      color: var(--accent-red);
+      font-weight: 800;
+    }
+
     .meter-track {
-      height: 20px;
-      background: var(--bg-pure);
-      border: 1px solid var(--border-focus);
+      height: 16px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-dark);
       position: relative;
       display: flex;
       align-items: center;
+      overflow: hidden;
     }
 
     .meter-fill {
       height: 100%;
       width: 0%;
-      background: #ffffff;
-      transition: width 0.04s linear;
+      background: linear-gradient(90deg, var(--accent-yellow-bright), var(--accent-orange-bright), var(--accent-red));
+      transition: width 0.03s linear;
     }
 
     .meter-ticks {
@@ -367,211 +449,141 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       display: flex;
       justify-content: space-between;
       padding: 0 6px;
-      font-size: 0.6rem;
-      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.58rem;
+      color: rgba(15, 23, 42, 0.6);
+      font-weight: 700;
       align-items: center;
       pointer-events: none;
-      mix-blend-mode: difference;
     }
 
-    /* MAIN BUTTONS MATRIX */
-    .col-buttons {
-      grid-column: span 7;
-    }
-
-    @media (max-width: 900px) {
-      .col-buttons {
-        grid-column: span 12;
-      }
-    }
-
-    .button-matrix {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-    }
-
-    @media (max-width: 600px) {
-      .button-matrix {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    .btn-key {
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
-      padding: 12px 6px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      transition: background 0.08s, color 0.08s, border-color 0.08s;
-    }
-
-    .btn-key .name {
-      font-size: 1.05rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
-
-    .btn-key .sub {
-      font-size: 0.6rem;
-      color: var(--text-dim);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    /* PRESSED STATE: HIGH-CONTRAST INVERTED WHITE ON BLACK */
-    .btn-key.pressed {
-      background: var(--active-white);
-      color: var(--active-black);
-      border-color: var(--active-white);
-    }
-
-    .btn-key.pressed .sub {
-      color: var(--active-black);
-      font-weight: 700;
-    }
-
-    /* D-PAD SECTION */
-    .col-dpad {
-      grid-column: span 5;
+    /* D-PAD (SPAN 3) */
+    .panel-dpad {
+      grid-column: span 3;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
     }
 
-    @media (max-width: 900px) {
-      .col-dpad {
-        grid-column: span 12;
-      }
-    }
-
     .dpad-cross {
       display: grid;
-      grid-template-columns: repeat(3, 44px);
-      grid-template-rows: repeat(3, 44px);
-      gap: 4px;
-      margin: 10px 0;
+      grid-template-columns: repeat(3, 36px);
+      grid-template-rows: repeat(3, 36px);
+      gap: 3px;
+      margin: auto 0;
     }
 
     .dpad-btn {
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
+      background: #ffffff;
+      border: 1px solid var(--border-dark);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--text-secondary);
       transition: all 0.08s;
     }
 
     .dpad-btn.center {
-      background: var(--bg-pure);
-      border: 1px dashed var(--border-light);
+      background: var(--bg-subtle);
+      border: 1px dashed var(--border-dark);
       color: var(--text-dim);
-      font-size: 0.65rem;
+      font-size: 0.6rem;
     }
 
     .dpad-btn.pressed {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
+      background: var(--accent-orange);
+      color: #ffffff;
+      border-color: var(--accent-orange);
     }
 
     .dpad-hex-readout {
       width: 100%;
       border: 1px solid var(--border-light);
-      background: var(--bg-card);
-      padding: 6px 12px;
-      font-size: 0.72rem;
+      background: var(--bg-subtle);
+      padding: 4px 10px;
+      font-size: 0.68rem;
       display: flex;
       justify-content: space-between;
-      color: var(--text-muted);
-    }
-
-    .dpad-hex-readout span.hex {
-      color: #ffffff;
+      color: var(--text-secondary);
       font-weight: 700;
     }
 
-    /* SPECIAL / RAW INPUTS */
-    .col-special {
-      grid-column: span 6;
+    .dpad-hex-readout span.hex {
+      color: var(--accent-orange);
+      font-weight: 800;
     }
 
-    @media (max-width: 900px) {
-      .col-special {
-        grid-column: span 12;
-      }
+    /* ROW 2: SPECIAL REGISTERS (SPAN 3) */
+    .panel-special {
+      grid-column: span 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .raw-registers {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 6px;
     }
 
     .reg-box {
-      background: var(--bg-card);
+      background: var(--bg-subtle);
       border: 1px solid var(--border-light);
-      padding: 10px;
+      padding: 6px 2px;
       text-align: center;
     }
 
     .reg-box .label {
-      font-size: 0.65rem;
-      color: var(--text-dim);
+      font-size: 0.58rem;
+      color: var(--text-muted);
       text-transform: uppercase;
-      margin-bottom: 4px;
-      letter-spacing: 1px;
+      margin-bottom: 2px;
+      font-weight: 600;
     }
 
     .reg-box .val {
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: 800;
-      color: #ffffff;
+      color: var(--accent-orange);
     }
 
     .misc-tags-list {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 4px;
+      margin-top: 6px;
     }
 
     .tag-item {
-      border: 1px solid var(--border-light);
-      padding: 4px 10px;
-      font-size: 0.68rem;
-      color: var(--text-dim);
-      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      padding: 2px 6px;
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      background: #ffffff;
+      font-weight: 600;
     }
 
     .tag-item.active {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
+      background: var(--accent-red);
+      color: #ffffff;
+      border-color: var(--accent-red);
       font-weight: 700;
     }
 
-    /* RAW DATA TABLE */
-    .col-table {
-      grid-column: span 6;
-    }
-
-    @media (max-width: 900px) {
-      .col-table {
-        grid-column: span 12;
-      }
+    /* RAW TELEMETRY TABLE (SPAN 4) */
+    .panel-telemetry {
+      grid-column: span 4;
+      overflow: hidden;
     }
 
     .raw-telemetry-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
+      line-height: 1.2;
     }
 
     .raw-telemetry-table tr {
@@ -579,41 +591,46 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
     }
 
     .raw-telemetry-table td {
-      padding: 5px 2px;
+      padding: 3px 2px;
     }
 
     .raw-telemetry-table td:nth-child(1) {
-      color: var(--text-muted);
+      color: var(--text-secondary);
+      font-weight: 600;
     }
 
     .raw-telemetry-table td:nth-child(2) {
       text-align: right;
-      color: #ffffff;
-      font-weight: 700;
+      color: var(--accent-orange);
+      font-weight: 800;
     }
 
-    /* ACTIVITY LOG */
-    .col-activity {
-      grid-column: span 12;
+    /* ACTIVITY LOG (SPAN 5) */
+    .panel-activity {
+      grid-column: span 5;
+      display: flex;
+      flex-direction: column;
     }
 
     .log-stream {
-      height: 120px;
+      flex: 1;
+      min-height: 0;
+      height: 100%;
       overflow-y: auto;
-      background: var(--bg-pure);
+      background: var(--bg-subtle);
       border: 1px solid var(--border-light);
-      padding: 10px 14px;
-      font-size: 0.72rem;
+      padding: 6px 10px;
+      font-size: 0.68rem;
       display: flex;
       flex-direction: column-reverse;
-      gap: 4px;
+      gap: 3px;
     }
 
     .log-row {
       display: flex;
-      gap: 12px;
-      border-bottom: 1px solid #151515;
-      padding: 2px 0;
+      gap: 8px;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 1px 0;
     }
 
     .log-row .time {
@@ -625,85 +642,34 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
     }
 
     .log-row .msg.act {
-      color: #ffffff;
+      color: var(--accent-orange);
       font-weight: 700;
     }
 
-    /* FOOTER */
-    footer {
-      border-top: 1px solid var(--border-light);
-      padding: 12px 0;
-      font-size: 0.68rem;
-      color: var(--text-dim);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    /* HIDDEN PRINT REPORT SPECIFIC TO @media print */
-    #print-report-container {
-      display: none;
-    }
-
+    /* PRINT LAYOUT */
+    #print-report-container { display: none; }
     @media print {
-      body {
-        background: #ffffff !important;
-        color: #000000 !important;
-        padding: 0 !important;
-      }
-
-      .container {
-        display: none !important;
-      }
-
-      #print-report-container {
-        display: block !important;
-        width: 100% !important;
-        padding: 20px !important;
-        font-family: var(--font-mono) !important;
-        color: #000000 !important;
-        background: #ffffff !important;
-      }
-
-      #print-report-container h1 {
-        font-size: 1.2rem;
-        border-bottom: 2px solid #000;
-        padding-bottom: 4px;
-        margin-bottom: 6px;
-      }
-
-      #print-report-container table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 12px;
-        font-size: 0.75rem;
-      }
-
-      #print-report-container th, #print-report-container td {
-        border: 1px solid #000000;
-        padding: 6px 8px;
-        text-align: left;
-      }
-
-      #print-report-container th {
-        background: #eeeeee;
-      }
+      body { background: #ffffff !important; color: #000000 !important; padding: 0 !important; }
+      .container { display: none !important; }
+      #print-report-container { display: block !important; width: 100% !important; padding: 20px !important; font-family: var(--font-mono) !important; color: #000000 !important; background: #ffffff !important; }
+      #print-report-container h1 { font-size: 1.2rem; border-bottom: 2px solid #ea580c; padding-bottom: 4px; margin-bottom: 6px; }
+      #print-report-container table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.75rem; }
+      #print-report-container th, #print-report-container td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+      #print-report-container th { background: #f8fafc; font-weight: 800; }
     }
   </style>
 </head>
 <body>
 
-  <!-- MAIN DASHBOARD -->
+  <!-- FULL-VIEWPORT SINGLE FRAME CONTAINER -->
   <div class="container">
+    
     <!-- TOP HEADER -->
     <header>
       <div class="brand-section">
         <div class="brand-mark">S80</div>
         <div class="brand-titles">
-          <h1>DATA FROG S80 • DIAGNOSTIC</h1>
-          <p>ESP32 CLASSIC / WROOM-32 • BLUEPAD32 TELEMETRY</p>
+          <h1>DATA FROG S80 <span>• ESP32 WROOM-32 BLUEPAD32 TELEMETRY</span></h1>
         </div>
       </div>
 
@@ -719,180 +685,148 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           <span id="conn-text">DISCONNECTED</span>
         </div>
         <div class="status-badge">
-          ID: <span id="ctl-model" style="color:#fff; margin-left:4px;">NONE</span>
+          ID: <span id="ctl-model" style="color:var(--text-main); font-weight:700; margin-left:4px;">NONE</span>
         </div>
         <div class="status-badge">
-          RATE: <span id="telemetry-hz" style="color:#fff; margin-left:4px;">0 HZ</span>
+          RATE: <span id="telemetry-hz" style="color:var(--accent-orange); font-weight:700; margin-left:4px;">0 HZ</span>
         </div>
       </div>
     </header>
 
-    <!-- GRID LAYOUT -->
-    <div class="grid-layout">
+    <!-- DASHBOARD DECK (2 HIGH-DENSITY ROWS FILLING 100% OF REMAINING VIEWPORT) -->
+    <div class="dashboard-deck">
 
-      <!-- DUAL ANALOG STICKS -->
-      <div class="panel col-sticks">
-        <!-- LEFT STICK -->
-        <div class="stick-block">
-          <div class="panel-header" style="width:100%">
-            <span>LEFT ANALOG STICK</span>
-            <span id="lbl-l-state" class="val">CENTER</span>
-          </div>
-          <div class="stick-canvas-box">
-            <div class="stick-crosshair-h"></div>
-            <div class="stick-crosshair-v"></div>
-            <div class="stick-deadzone-box"></div>
-            <div id="stick-l-pointer" class="stick-pointer"></div>
-          </div>
-          <div class="stick-data-row">
-            <div>X: <span id="val-lx" class="num">0</span></div>
-            <div>Y: <span id="val-ly" class="num">0</span></div>
-          </div>
-          <div class="stick-directions">
-            <div id="dir-l-up" class="dir-pill">UP</div>
-            <div id="dir-l-down" class="dir-pill">DOWN</div>
-            <div id="dir-l-left" class="dir-pill">LEFT</div>
-            <div id="dir-l-right" class="dir-pill">RIGHT</div>
-            <div id="dir-l-center" class="dir-pill active">CENTER</div>
-          </div>
-        </div>
-
-        <!-- RIGHT STICK -->
-        <div class="stick-block">
-          <div class="panel-header" style="width:100%">
-            <span>RIGHT ANALOG STICK</span>
-            <span id="lbl-r-state" class="val">CENTER</span>
-          </div>
-          <div class="stick-canvas-box">
-            <div class="stick-crosshair-h"></div>
-            <div class="stick-crosshair-v"></div>
-            <div class="stick-deadzone-box"></div>
-            <div id="stick-r-pointer" class="stick-pointer"></div>
-          </div>
-          <div class="stick-data-row">
-            <div>X: <span id="val-rx" class="num">0</span></div>
-            <div>Y: <span id="val-ry" class="num">0</span></div>
-          </div>
-          <div class="stick-directions">
-            <div id="dir-r-up" class="dir-pill">UP</div>
-            <div id="dir-r-down" class="dir-pill">DOWN</div>
-            <div id="dir-r-left" class="dir-pill">LEFT</div>
-            <div id="dir-r-right" class="dir-pill">RIGHT</div>
-            <div id="dir-r-center" class="dir-pill active">CENTER</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ANALOG TRIGGERS -->
-      <div class="panel col-triggers">
+      <!-- ROW 1: CIRCULAR JOYSTICKS (4 COLS) -->
+      <div class="panel panel-joysticks">
         <div class="panel-header">
-          <span>ANALOG TRIGGERS</span>
-          <span style="font-size:0.65rem; color:var(--text-dim)">RANGE 0 — 1020</span>
+          <span>ANALOG JOYSTICKS</span>
+          <span style="font-size:0.6rem; color:var(--text-muted)">RANGE -512..+512</span>
         </div>
-
-        <!-- ZL / BRAKE -->
-        <div class="trigger-item">
-          <div class="trigger-labels">
-            <span>ZL / BRAKE</span>
-            <span>VALUE: <span id="val-zl" class="t-val">0</span> / 1020</span>
-          </div>
-          <div class="meter-track">
-            <div id="bar-zl" class="meter-fill"></div>
-            <div class="meter-ticks">
-              <span>0</span>
-              <span>255</span>
-              <span>512</span>
-              <span>768</span>
-              <span>1020</span>
+        <div class="joysticks-container">
+          <!-- LEFT STICK -->
+          <div class="stick-widget">
+            <div class="stick-title-row">
+              <span>LEFT STICK</span>
+              <span id="lbl-l-state" style="color:var(--accent-orange)">CENTER</span>
+            </div>
+            <div class="stick-canvas-box">
+              <svg class="stick-svg-grid" viewBox="0 0 114 114">
+                <line x1="57" y1="0" x2="57" y2="114" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
+                <line x1="0" y1="57" x2="114" y2="57" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
+                <circle cx="57" cy="57" r="42" fill="none" stroke="#e2e8f0" stroke-width="1" />
+                <circle cx="57" cy="57" r="22" fill="none" stroke="#e2e8f0" stroke-width="1" />
+                <circle cx="57" cy="57" r="10" fill="none" stroke="#f97316" stroke-width="1.2" stroke-dasharray="2,2" />
+              </svg>
+              <div id="stick-l-pointer" class="stick-pointer"></div>
+            </div>
+            <div class="stick-data-row">
+              <div>X: <span id="val-lx" class="num">0</span></div>
+              <div>Y: <span id="val-ly" class="num">0</span></div>
+            </div>
+            <div class="stick-directions">
+              <div id="dir-l-up" class="dir-pill">UP</div>
+              <div id="dir-l-down" class="dir-pill">DN</div>
+              <div id="dir-l-left" class="dir-pill">LT</div>
+              <div id="dir-l-right" class="dir-pill">RT</div>
+              <div id="dir-l-center" class="dir-pill active">CTR</div>
             </div>
           </div>
-        </div>
 
-        <!-- ZR / THROTTLE -->
-        <div class="trigger-item">
-          <div class="trigger-labels">
-            <span>ZR / THROTTLE</span>
-            <span>VALUE: <span id="val-zr" class="t-val">0</span> / 1020</span>
-          </div>
-          <div class="meter-track">
-            <div id="bar-zr" class="meter-fill"></div>
-            <div class="meter-ticks">
-              <span>0</span>
-              <span>255</span>
-              <span>512</span>
-              <span>768</span>
-              <span>1020</span>
+          <!-- RIGHT STICK -->
+          <div class="stick-widget">
+            <div class="stick-title-row">
+              <span>RIGHT STICK</span>
+              <span id="lbl-r-state" style="color:var(--accent-orange)">CENTER</span>
+            </div>
+            <div class="stick-canvas-box">
+              <svg class="stick-svg-grid" viewBox="0 0 114 114">
+                <line x1="57" y1="0" x2="57" y2="114" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
+                <line x1="0" y1="57" x2="114" y2="57" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2" />
+                <circle cx="57" cy="57" r="42" fill="none" stroke="#e2e8f0" stroke-width="1" />
+                <circle cx="57" cy="57" r="22" fill="none" stroke="#e2e8f0" stroke-width="1" />
+                <circle cx="57" cy="57" r="10" fill="none" stroke="#f97316" stroke-width="1.2" stroke-dasharray="2,2" />
+              </svg>
+              <div id="stick-r-pointer" class="stick-pointer"></div>
+            </div>
+            <div class="stick-data-row">
+              <div>X: <span id="val-rx" class="num">0</span></div>
+              <div>Y: <span id="val-ry" class="num">0</span></div>
+            </div>
+            <div class="stick-directions">
+              <div id="dir-r-up" class="dir-pill">UP</div>
+              <div id="dir-r-down" class="dir-pill">DN</div>
+              <div id="dir-r-left" class="dir-pill">LT</div>
+              <div id="dir-r-right" class="dir-pill">RT</div>
+              <div id="dir-r-center" class="dir-pill active">CTR</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- MAIN BUTTONS -->
-      <div class="panel col-buttons">
-        <div class="panel-header">
-          <span>MAIN BUTTONS</span>
-          <span style="font-size:0.65rem; color:var(--text-dim)">BINARY TACTILE MATRIX</span>
+      <!-- ROW 1: BUTTONS & TRIGGERS (5 COLS) -->
+      <div class="panel panel-center">
+        <div>
+          <div class="panel-header">
+            <span>MAIN BUTTONS MATRIX</span>
+            <span style="font-size:0.6rem; color:var(--text-muted)">TACTILE STATUS</span>
+          </div>
+          <div class="button-matrix">
+            <div class="btn-key" id="key-a" data-name="A"><div class="name">A</div><div class="sub" id="sub-a">OFF</div></div>
+            <div class="btn-key" id="key-b" data-name="B"><div class="name">B</div><div class="sub" id="sub-b">OFF</div></div>
+            <div class="btn-key" id="key-x" data-name="X"><div class="name">X</div><div class="sub" id="sub-x">OFF</div></div>
+            <div class="btn-key" id="key-y" data-name="Y"><div class="name">Y</div><div class="sub" id="sub-y">OFF</div></div>
+            <div class="btn-key" id="key-l1" data-name="L"><div class="name">L</div><div class="sub" id="sub-l1">OFF</div></div>
+            <div class="btn-key" id="key-r1" data-name="R"><div class="name">R</div><div class="sub" id="sub-r1">OFF</div></div>
+            <div class="btn-key" id="key-l2" data-name="ZL"><div class="name">ZL</div><div class="sub" id="sub-l2">OFF</div></div>
+            <div class="btn-key" id="key-r2" data-name="ZR"><div class="name">ZR</div><div class="sub" id="sub-r2">OFF</div></div>
+            <div class="btn-key" id="key-l3" data-name="L3"><div class="name">L3</div><div class="sub" id="sub-l3">OFF</div></div>
+            <div class="btn-key" id="key-r3" data-name="R3"><div class="name">R3</div><div class="sub" id="sub-r3">OFF</div></div>
+          </div>
         </div>
-        <div class="button-matrix">
-          <div class="btn-key" id="key-a" data-name="A">
-            <div class="name">A</div>
-            <div class="sub" id="sub-a">OFF</div>
+
+        <!-- INTEGRATED ANALOG TRIGGERS (ZL & ZR) -->
+        <div class="triggers-subpanel">
+          <div class="trigger-unit">
+            <div class="trigger-head">
+              <span>ZL / BRAKE</span>
+              <span>VALUE: <span id="val-zl" class="t-val">0</span> / 1020</span>
+            </div>
+            <div class="meter-track">
+              <div id="bar-zl" class="meter-fill"></div>
+              <div class="meter-ticks">
+                <span>0</span><span>255</span><span>512</span><span>768</span><span>1020</span>
+              </div>
+            </div>
           </div>
-          <div class="btn-key" id="key-b" data-name="B">
-            <div class="name">B</div>
-            <div class="sub" id="sub-b">OFF</div>
-          </div>
-          <div class="btn-key" id="key-x" data-name="X">
-            <div class="name">X</div>
-            <div class="sub" id="sub-x">OFF</div>
-          </div>
-          <div class="btn-key" id="key-y" data-name="Y">
-            <div class="name">Y</div>
-            <div class="sub" id="sub-y">OFF</div>
-          </div>
-          <div class="btn-key" id="key-l1" data-name="L">
-            <div class="name">L</div>
-            <div class="sub" id="sub-l1">OFF</div>
-          </div>
-          <div class="btn-key" id="key-r1" data-name="R">
-            <div class="name">R</div>
-            <div class="sub" id="sub-r1">OFF</div>
-          </div>
-          <div class="btn-key" id="key-l2" data-name="ZL">
-            <div class="name">ZL</div>
-            <div class="sub" id="sub-l2">OFF</div>
-          </div>
-          <div class="btn-key" id="key-r2" data-name="ZR">
-            <div class="name">ZR</div>
-            <div class="sub" id="sub-r2">OFF</div>
-          </div>
-          <div class="btn-key" id="key-l3" data-name="L3">
-            <div class="name">L3</div>
-            <div class="sub" id="sub-l3">OFF</div>
-          </div>
-          <div class="btn-key" id="key-r3" data-name="R3">
-            <div class="name">R3</div>
-            <div class="sub" id="sub-r3">OFF</div>
+          <div class="trigger-unit">
+            <div class="trigger-head">
+              <span>ZR / THROTTLE</span>
+              <span>VALUE: <span id="val-zr" class="t-val">0</span> / 1020</span>
+            </div>
+            <div class="meter-track">
+              <div id="bar-zr" class="meter-fill"></div>
+              <div class="meter-ticks">
+                <span>0</span><span>255</span><span>512</span><span>768</span><span>1020</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- D-PAD -->
-      <div class="panel col-dpad">
+      <!-- ROW 1: D-PAD (3 COLS) -->
+      <div class="panel panel-dpad">
         <div class="panel-header" style="width:100%">
           <span>DIRECTIONAL PAD</span>
-          <span style="font-size:0.65rem; color:var(--text-dim)">HAT SWITCH</span>
+          <span style="font-size:0.6rem; color:var(--text-muted)">HAT SWITCH</span>
         </div>
 
         <div class="dpad-cross">
           <div></div>
           <div class="dpad-btn" id="dpad-up">▲</div>
           <div></div>
-
           <div class="dpad-btn" id="dpad-left">◀</div>
           <div class="dpad-btn center">+</div>
           <div class="dpad-btn" id="dpad-right">▶</div>
-
           <div></div>
           <div class="dpad-btn" id="dpad-down">▼</div>
           <div></div>
@@ -904,11 +838,11 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- SPECIAL / RAW INPUTS -->
-      <div class="panel col-special">
+      <!-- ROW 2: SPECIAL REGISTERS (3 COLS) -->
+      <div class="panel panel-special">
         <div class="panel-header">
-          <span>SPECIAL / RAW INPUT REGISTERS</span>
-          <span style="font-size:0.65rem; color:var(--text-dim)">HEXADECIMAL BITMASK</span>
+          <span>SPECIAL REGISTERS</span>
+          <span style="font-size:0.6rem; color:var(--text-muted)">HEX BITMASKS</span>
         </div>
 
         <div class="raw-registers">
@@ -917,7 +851,7 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
             <div class="val" id="hex-btn">0x0000</div>
           </div>
           <div class="reg-box">
-            <div class="label">miscButtons()</div>
+            <div class="label">misc()</div>
             <div class="val" id="hex-misc">0x0000</div>
           </div>
           <div class="reg-box">
@@ -936,32 +870,29 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- RAW TELEMETRY TABLE -->
-      <div class="panel col-table">
+      <!-- ROW 2: RAW TELEMETRY TABLE (4 COLS) -->
+      <div class="panel panel-telemetry">
         <div class="panel-header">
           <span>RAW TELEMETRY REGISTERS</span>
-          <span style="font-size:0.65rem; color:var(--text-dim)">MONITOR</span>
+          <span style="font-size:0.6rem; color:var(--text-muted)">MONITOR</span>
         </div>
         <table class="raw-telemetry-table">
           <tbody>
             <tr><td>BUTTONS REGISTER</td><td id="tbl-buttons">0x0000</td></tr>
             <tr><td>MISC BUTTONS REGISTER</td><td id="tbl-misc">0x0000</td></tr>
             <tr><td>D-PAD REGISTER</td><td id="tbl-dpad">0x00</td></tr>
-            <tr><td>AXIS X (LEFT STICK)</td><td id="tbl-lx">0</td></tr>
-            <tr><td>AXIS Y (LEFT STICK)</td><td id="tbl-ly">0</td></tr>
-            <tr><td>AXIS RX (RIGHT STICK)</td><td id="tbl-rx">0</td></tr>
-            <tr><td>AXIS RY (RIGHT STICK)</td><td id="tbl-ry">0</td></tr>
-            <tr><td>BRAKE / ZL</td><td id="tbl-zl">0</td></tr>
-            <tr><td>THROTTLE / ZR</td><td id="tbl-zr">0</td></tr>
+            <tr><td>AXIS X / Y (LEFT)</td><td><span id="tbl-lx">0</span> / <span id="tbl-ly">0</span></td></tr>
+            <tr><td>AXIS RX / RY (RIGHT)</td><td><span id="tbl-rx">0</span> / <span id="tbl-ry">0</span></td></tr>
+            <tr><td>BRAKE (ZL) / THROTTLE (ZR)</td><td><span id="tbl-zl">0</span> / <span id="tbl-zr">0</span></td></tr>
           </tbody>
         </table>
       </div>
 
-      <!-- ACTIVITY LOG -->
-      <div class="panel col-activity">
+      <!-- ROW 2: ACTIVITY STREAM (5 COLS) -->
+      <div class="panel panel-activity">
         <div class="panel-header">
           <span>INPUT ACTIVITY STREAM</span>
-          <button id="btn-clear-log" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-family:var(--font-mono); font-size:0.68rem;">[ CLEAR ]</button>
+          <button id="btn-clear-log" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-family:var(--font-mono); font-size:0.65rem;">[ CLEAR ]</button>
         </div>
         <div class="log-stream" id="log-stream">
           <div class="log-row">
@@ -972,15 +903,9 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       </div>
 
     </div>
-
-    <!-- FOOTER -->
-    <footer>
-      <div>ESP32 WROOM-32 • BLUEPAD32 CONTROLLER HOST</div>
-      <div>DATA FROG S80 • ARCHITECTURAL MINIMAL B&amp;W</div>
-    </footer>
   </div>
 
-  <!-- PRINT-ONLY REPORT CONTAINER -->
+  <!-- PRINT-ONLY CONTAINER -->
   <div id="print-report-container">
     <h1>DATA FROG S80 CONTROLLER • INPUT SPECIFICATION REPORT</h1>
     <p style="font-size:0.75rem; margin-bottom:12px;">Generated via ESP32 Diagnostic System | Bluepad32 Architecture</p>
@@ -996,18 +921,17 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         </tr>
       </thead>
       <tbody id="print-table-body">
-        <!-- Rows dynamically populated -->
       </tbody>
     </table>
   </div>
 
   <script>
-    // Telemetry & WebSocket Variables
     const WS_URL = `ws://${window.location.hostname || '192.168.4.1'}:81/`;
     let socket = null;
     let frameCount = 0;
     let lastFpsTime = performance.now();
     let prevState = null;
+
     let latestState = {
       c: 0, idx: 0, name: "DATA FROG S80",
       lx: 0, ly: 0, rx: 0, ry: 0, zl: 0, zr: 0,
@@ -1017,7 +941,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       l3: false, r3: false
     };
 
-    // Controller Button Reference Data for PDF / Printout
     const BUTTON_SPECS = [
       { name: "A", hex: "0x0001", api: "ctl->a()", prop: "a", desc: "Primary action button (Bottom)" },
       { name: "B", hex: "0x0002", api: "ctl->b()", prop: "b", desc: "Secondary action / Cancel (Right)" },
@@ -1045,15 +968,10 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       { name: "- (SELECT / MINUS)", hex: "misc 0x0002", api: "ctl->miscButtons()", prop: "minus", desc: "Minus / Select menu button" }
     ];
 
-    // WebSocket Connection
     function connectWS() {
       try {
         socket = new WebSocket(WS_URL);
-
-        socket.onopen = () => {
-          logEvent("WebSocket connected to ESP32 (Port 81)", true);
-        };
-
+        socket.onopen = () => { logEvent("WebSocket connected to ESP32 (Port 81)", true); };
         socket.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
@@ -1061,25 +979,16 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
             updateDashboard(data);
             detectEvents(data);
             calcFPS();
-          } catch (e) {
-            console.error("JSON parse err", e);
-          }
+          } catch (e) {}
         };
-
         socket.onclose = () => {
           setConnectionState(false, "NONE");
           setTimeout(connectWS, 1500);
         };
-
-        socket.onerror = () => {
-          if (socket) socket.close();
-        };
-      } catch (e) {
-        console.error("WS error", e);
-      }
+        socket.onerror = () => { if (socket) socket.close(); };
+      } catch (e) {}
     }
 
-    // Rate Calculator
     function calcFPS() {
       frameCount++;
       const now = performance.now();
@@ -1091,7 +1000,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       }
     }
 
-    // Connection Indicators
     function setConnectionState(connected, name) {
       const ind = document.getElementById("status-ind");
       const txt = document.getElementById("conn-text");
@@ -1109,7 +1017,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       }
     }
 
-    // Update Button Element
     function updateKey(id, subId, pressed) {
       const el = document.getElementById(id);
       const sub = document.getElementById(subId);
@@ -1122,14 +1029,11 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       }
     }
 
-    // Update Dashboard UI
     function updateDashboard(data) {
       setConnectionState(data.c === 1, data.name);
       if (data.c !== 1) return;
 
-      // 1. Joysticks (-512 to +512)
-      // Visual box: 160px; center: 80px; max offset ~60px
-      const MAX_OFFSET = 60;
+      const MAX_OFFSET = 38;
       const lxPx = (data.lx / 512) * MAX_OFFSET;
       const lyPx = (data.ly / 512) * MAX_OFFSET;
       document.getElementById("stick-l-pointer").style.transform = `translate(${lxPx}px, ${lyPx}px)`;
@@ -1145,7 +1049,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       updateStickPills("l", data.lx, data.ly);
       updateStickPills("r", data.rx, data.ry);
 
-      // 2. Triggers (0 to 1020)
       const zlPercent = Math.min(100, Math.max(0, (data.zl / 1020) * 100));
       const zrPercent = Math.min(100, Math.max(0, (data.zr / 1020) * 100));
       document.getElementById("bar-zl").style.width = `${zlPercent}%`;
@@ -1153,7 +1056,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       document.getElementById("bar-zr").style.width = `${zrPercent}%`;
       document.getElementById("val-zr").textContent = data.zr;
 
-      // 3. Main Buttons
       updateKey("key-a", "sub-a", data.a);
       updateKey("key-b", "sub-b", data.b);
       updateKey("key-x", "sub-x", data.x);
@@ -1165,7 +1067,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       updateKey("key-l3", "sub-l3", data.l3);
       updateKey("key-r3", "sub-r3", data.r3);
 
-      // 4. D-Pad
       const dpad = data.dpad || 0;
       toggleDpad("dpad-up", (dpad & 0x01) !== 0);
       toggleDpad("dpad-down", (dpad & 0x02) !== 0);
@@ -1175,7 +1076,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       document.getElementById("dpad-hex").textContent = dpadHexStr;
       document.getElementById("hex-dpad-reg").textContent = dpadHexStr;
 
-      // 5. Special Registers
       const btnHex = "0x" + (data.btn || 0).toString(16).toUpperCase().padStart(4, "0");
       const miscHex = "0x" + (data.misc || 0).toString(16).toUpperCase().padStart(4, "0");
       document.getElementById("hex-btn").textContent = btnHex;
@@ -1187,7 +1087,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       toggleTag("tag-plus", (misc & 0x0004) !== 0);
       toggleTag("tag-capture", (misc & 0x0008) !== 0);
 
-      // 6. Telemetry Table
       document.getElementById("tbl-buttons").textContent = btnHex;
       document.getElementById("tbl-misc").textContent = miscHex;
       document.getElementById("tbl-dpad").textContent = dpadHexStr;
@@ -1231,20 +1130,15 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       if (isLeft) dirs.push("LEFT");
       if (isRight) dirs.push("RIGHT");
       if (dirs.length === 0) dirs.push("CENTER");
-      document.getElementById(`lbl-${prefix}-state`).textContent = dirs.join(" + ");
+      document.getElementById(`lbl-${prefix}-state`).textContent = dirs.join("+");
     }
 
-    // Event Detection
     function detectEvents(curr) {
-      if (!prevState) {
-        prevState = curr;
-        return;
-      }
-
+      if (!prevState) { prevState = curr; return; }
       const keys = [
-        ["a", "BUTTON A"], ["b", "BUTTON B"], ["x", "BUTTON X"], ["y", "BUTTON Y"],
-        ["l1", "SHOULDER L"], ["r1", "SHOULDER R"], ["l2", "TRIGGER ZL (DIGITAL)"], ["r2", "TRIGGER ZR (DIGITAL)"],
-        ["l3", "THUMB L3"], ["r3", "THUMB R3"]
+        ["a", "A"], ["b", "B"], ["x", "X"], ["y", "Y"],
+        ["l1", "L"], ["r1", "R"], ["l2", "ZL"], ["r2", "ZR"],
+        ["l3", "L3"], ["r3", "R3"]
       ];
 
       keys.forEach(([k, label]) => {
@@ -1279,14 +1173,11 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       const stream = document.getElementById("log-stream");
       const row = document.createElement("div");
       row.className = "log-row";
-
       const now = new Date();
       const t = now.toTimeString().split(" ")[0] + "." + String(now.getMilliseconds()).padStart(3, "0").slice(0, 2);
-
       row.innerHTML = `<span class="time">${t}</span><span class="msg ${highlight ? 'act' : ''}">${msg}</span>`;
       stream.insertBefore(row, stream.firstChild);
-
-      while (stream.children.length > 25) {
+      while (stream.children.length > 20) {
         stream.removeChild(stream.lastChild);
       }
     }
@@ -1296,9 +1187,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       logEvent("Log cleared", false);
     });
 
-    // =========================================================================
-    // PDF GENERATION (Direct Vector PDF Download in Pure JS)
-    // =========================================================================
     function getObservedValue(prop) {
       const st = latestState;
       if (prop === "dpad_up") return (st.dpad & 0x01) ? "PRESSED" : "RELEASED";
@@ -1315,13 +1203,11 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
     }
 
     function generatePDF() {
-      // Direct PDF 1.4 vector generator (pure JS, offline)
       const now = new Date();
       const dateStr = now.toISOString().replace("T", " ").slice(0, 19);
 
       let textCommands = [];
       function addText(font, size, x, y, str) {
-        // PDF text escape
         const clean = str.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
         textCommands.push(`BT /${font} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${clean}) Tj ET`);
       }
@@ -1335,34 +1221,33 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         textCommands.push(`${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S`);
       }
 
-      // 612 x 792 pt (Letter size)
-      // Header
       addText("F2", 14, 40, 750, "DATA FROG S80 - CONTROLLER INPUT SPECIFICATION");
-      addText("F1", 9, 40, 736, "Diagnostic System: ESP32 Classic + Bluepad32 | Architectural B&W Layout");
+      addText("F1", 9, 40, 736, "Diagnostic System: ESP32 Classic + Bluepad32 | Single-Frame Full Deck");
       addText("F1", 8, 40, 722, `Generated: ${dateStr} | Status: ${latestState.c ? "CONNECTED" : "DISCONNECTED"} | Model: ${latestState.name}`);
 
-      // Header Rule
+      textCommands.push("0.92 0.35 0.05 RG");
+      textCommands.push("2 w");
       addLine(40, 712, 572, 712);
+      textCommands.push("0 G");
+      textCommands.push("1 w");
 
-      // Table Header
       let curY = 694;
-      addRect(40, curY - 4, 532, 16, true); // Black fill
-      textCommands.push("1 g"); // White text
+      textCommands.push("0.92 0.35 0.05 rg");
+      addRect(40, curY - 4, 532, 16, true);
+      textCommands.push("1 g");
       addText("F2", 8, 45, curY, "INPUT / BUTTON");
       addText("F2", 8, 160, curY, "HEX MASK");
       addText("F2", 8, 240, curY, "BLUEPAD32 API");
       addText("F2", 8, 350, curY, "STATE");
       addText("F2", 8, 420, curY, "DESCRIPTION");
-      textCommands.push("0 g"); // Back to black text
+      textCommands.push("0 g");
 
       curY -= 18;
 
       BUTTON_SPECS.forEach((item, index) => {
         const val = getObservedValue(item.prop);
-        
-        // Alternating row background
         if (index % 2 === 1) {
-          textCommands.push("0.96 g");
+          textCommands.push("0.96 0.97 0.98 rg");
           addRect(40, curY - 3, 532, 14, true);
           textCommands.push("0 g");
         }
@@ -1370,18 +1255,24 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         addText("F2", 7.5, 45, curY, item.name);
         addText("F3", 7.5, 160, curY, item.hex);
         addText("F3", 7.5, 240, curY, item.api);
-        addText("F2", 7.5, 350, curY, val);
+        
+        if (val === "PRESSED" || val === "ACTIVE") {
+          textCommands.push("0.86 0.24 0.05 rg");
+          addText("F2", 7.5, 350, curY, val);
+          textCommands.push("0 g");
+        } else {
+          addText("F2", 7.5, 350, curY, val);
+        }
+
         addText("F1", 7, 420, curY, item.desc);
 
-        // Thin divider
-        textCommands.push("0.85 G");
+        textCommands.push("0.88 G");
         addLine(40, curY - 4, 572, curY - 4);
         textCommands.push("0 G");
 
         curY -= 14.5;
       });
 
-      // Footer
       addLine(40, 45, 572, 45);
       addText("F1", 7, 40, 34, "DATA FROG S80 DIAGNOSTIC • ESP32 WEBSOCKET TELEMETRY • VERIFIED INPUT SPECIFICATION");
       addText("F1", 7, 480, 34, "PAGE 1 OF 1");
@@ -1389,7 +1280,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       const streamContent = textCommands.join("\n");
       const streamLen = streamContent.length;
 
-      // Construct standard PDF objects
       const objects = [];
       objects.push(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj`);
       objects.push(`2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj`);
@@ -1420,7 +1310,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       pdf += `${startxref}\n`;
       pdf += "%%EOF";
 
-      // Trigger Download
       const blob = new Blob([pdf], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -1433,7 +1322,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       logEvent("Downloaded S80 Button Specification PDF", true);
     }
 
-    // Native Browser Print / Save as PDF
     function preparePrintReport() {
       const now = new Date();
       document.getElementById("print-meta").textContent = 
@@ -1460,7 +1348,6 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
     document.getElementById("btn-download-pdf").addEventListener("click", generatePDF);
     document.getElementById("btn-print-report").addEventListener("click", preparePrintReport);
 
-    // Initialize WebSocket on Load
     window.addEventListener("DOMContentLoaded", connectWS);
   </script>
 </body>
