@@ -4,7 +4,13 @@
 #include <Arduino.h>
 
 // =============================================================================
-// WI-FI ACCESS POINT CONFIGURATION
+// WI-FI NETWORK CONFIGURATION (STATION MODE - CONNECT TO ROUTER)
+// =============================================================================
+#define WIFI_SSID        "sakshyam"
+#define WIFI_PASSWORD    "sakshyam"
+
+// =============================================================================
+// WI-FI ACCESS POINT CONFIGURATION (FALLBACK / DIRECT ACCESS)
 // =============================================================================
 #define AP_SSID          "S80-DIAGNOSTIC"
 #define AP_PASSWORD      "12345678"

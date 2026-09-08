@@ -90,7 +90,8 @@ DATA FROG S80 DIAGNOSTIC SYSTEM
 ========================================
 Initializing Bluepad32...
 Initializing WiFi AP...
-WiFi AP Started. Local IP: 192.168.4.1
+Connecting to Wi-Fi network 'sakshyam' .....
+Connected to 'sakshyam'! Local IP: 192.168.1.50
 Initializing Web Server & WebSockets...
 HTTP Web Server started on port 80
 WebSocket Server started on port 81
@@ -98,10 +99,13 @@ WebSocket Server started on port 81
 ========================================
 S80 WEB DIAGNOSTIC READY
 ========================================
-SSID:     S80-DIAGNOSTIC
-Password: 12345678
-IP:       192.168.4.1
-Dashboard URL: http://192.168.4.1
+Wi-Fi Network: Connected to 'sakshyam'
+Local IP:      192.168.1.50
+Dashboard URL: http://192.168.1.50
+----------------------------------------
+Fallback Direct AP also available:
+SSID:          S80-DIAGNOSTIC (PW: 12345678)
+AP URL:        http://192.168.4.1
 ========================================
 Waiting for controller...
 ```
@@ -121,13 +125,19 @@ Model:            DATA FROG S80
 ```
 
 ### Step 4: Open the Dashboard
-1. On your phone or laptop, open Wi-Fi settings.
-2. Connect to the network:
-   * **SSID**: `S80-DIAGNOSTIC`
-   * **Password**: `12345678`
-3. Open your browser and navigate to:
-   * `http://192.168.4.1`
-4. The diagnostic dashboard will open immediately and stream live data at **30–35 Hz**.
+You have **two ways** to access the live dashboard:
+
+* **Option A (Via Your Wi-Fi Network)**:
+  1. Make sure your phone or laptop is connected to your regular Wi-Fi network (`sakshyam`).
+  2. Open your browser and go to the ESP32 Local IP address printed in the Serial Monitor:
+     * `http://<ESP32_Local_IP>` (e.g., `http://192.168.1.50`)
+
+* **Option B (Direct Access Point)**:
+  1. Connect your phone or laptop directly to the ESP32 AP:
+     * **SSID**: `S80-DIAGNOSTIC`
+     * **Password**: `12345678`
+  2. Open your browser and navigate to:
+     * `http://192.168.4.1`
 
 ---
 

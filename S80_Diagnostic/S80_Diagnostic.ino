@@ -80,10 +80,21 @@ void setup() {
     Serial.println("========================================");
     Serial.println("S80 WEB DIAGNOSTIC READY");
     Serial.println("========================================");
-    Serial.printf("SSID:     %s\n", AP_SSID);
-    Serial.printf("Password: %s\n", AP_PASSWORD);
-    Serial.print ("IP:       "); Serial.println(WiFi.softAPIP());
-    Serial.printf("Dashboard URL: http://%s\n", WiFi.softAPIP().toString().c_str());
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.printf("Wi-Fi Network: Connected to '%s'\n", WIFI_SSID);
+        Serial.print ("Local IP:      "); Serial.println(WiFi.localIP());
+        Serial.printf("Dashboard URL: http://%s\n", WiFi.localIP().toString().c_str());
+        Serial.println("----------------------------------------");
+        Serial.println("Fallback Direct AP also available:");
+        Serial.printf("SSID:          %s (PW: %s)\n", AP_SSID, AP_PASSWORD);
+        Serial.printf("AP URL:        http://%s\n", WiFi.softAPIP().toString().c_str());
+    } else {
+        Serial.printf("Wi-Fi Network: Could not connect to '%s'\n", WIFI_SSID);
+        Serial.println("Using Direct SoftAP Mode:");
+        Serial.printf("SSID:          %s (PW: %s)\n", AP_SSID, AP_PASSWORD);
+        Serial.print ("AP IP:         "); Serial.println(WiFi.softAPIP());
+        Serial.printf("Dashboard URL: http://%s\n", WiFi.softAPIP().toString().c_str());
+    }
     Serial.println("========================================");
     Serial.println("Waiting for controller...");
     Serial.println();
@@ -123,15 +134,31 @@ void loop() {
 // WI-FI ACCESS POINT INITIALIZATION
 // =============================================================================
 void startWiFi() {
-    WiFi.mode(WIFI_AP);
-    bool apStarted = WiFi.softAP(AP_SSID, AP_PASSWORD, AP_CHANNEL, 0, AP_MAX_CLIENTS);
+    // Enable dual mode (Connects to router, with direct SoftAP as fallback)
+    WiFi.mode(WIFI_AP_STA);
 
+    // 1. Start SoftAP
+    bool apStarted = WiFi.softAP(AP_SSID, AP_PASSWORD, AP_CHANNEL, 0, AP_MAX_CLIENTS);
     if (apStarted) {
-        IPAddress apIP = WiFi.softAPIP();
-        Serial.print("WiFi AP Started. Local IP: ");
-        Serial.println(apIP);
+        Serial.printf("SoftAP Started. Direct IP: %s (SSID: %s)\n", WiFi.softAPIP().toString().c_str(), AP_SSID);
+    }
+
+    // 2. Connect to local Wi-Fi router
+    Serial.printf("Connecting to Wi-Fi network '%s' ", WIFI_SSID);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+    unsigned long startAttempt = millis();
+    // Wait up to 10 seconds for Wi-Fi connection
+    while (WiFi.status() != WL_CONNECTED && (millis() - startAttempt < 10000)) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println();
+
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.printf("Connected to '%s'! Local IP: %s\n", WIFI_SSID, WiFi.localIP().toString().c_str());
     } else {
-        Serial.println("ERROR: Failed to initialize WiFi AP!");
+        Serial.printf("Could not connect to '%s' (timed out). Using direct SoftAP at %s\n", WIFI_SSID, WiFi.softAPIP().toString().c_str());
     }
 }
 
