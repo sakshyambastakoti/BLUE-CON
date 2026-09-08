@@ -33,7 +33,41 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <WebSocketsServer.h>
+#include <Update.h>
 #include "dashboard_html.h"
+
+const char otaUpdateHtml[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spider Controller - OTA Firmware Update</title>
+  <style>
+    body { background: #020611; color: #00f3ff; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    .box { background: rgba(6, 15, 30, 0.85); padding: 35px; border: 1px solid rgba(0, 243, 255, 0.4); border-radius: 10px; box-shadow: 0 0 25px rgba(0, 243, 255, 0.15); text-align: center; max-width: 420px; }
+    h2 { margin-top: 0; letter-spacing: 2px; }
+    p { color: #5e849c; font-size: 0.9rem; line-height: 1.4; }
+    input[type=file] { margin: 25px 0; color: #5e849c; font-size: 0.85rem; }
+    input[type=submit] { background: rgba(0, 243, 255, 0.15); border: 1px solid #00f3ff; color: #00f3ff; padding: 12px 24px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: monospace; border-radius: 4px; }
+    input[type=submit]:hover { background: rgba(0, 243, 255, 0.3); box-shadow: 0 0 15px rgba(0, 243, 255, 0.4); }
+    a { color: #5e849c; text-decoration: none; margin-top: 25px; display: inline-block; font-size: 0.8rem; }
+    a:hover { color: #00f3ff; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>[ FIRMWARE UPDATE ]</h2>
+    <p>Upload a compiled <code>.bin</code> file to update the ESP32 firmware wirelessly.</p>
+    <form method="POST" action="/update" enctype="multipart/form-data">
+      <input type="file" name="update" accept=".bin" required><br>
+      <input type="submit" value="UPLOAD & FLASH">
+    </form>
+    <a href="/">&lt; RETURN TO DASHBOARD</a>
+  </div>
+</body>
+</html>
+)rawliteral";
 #endif
 
 // =============================================================================
@@ -408,6 +442,35 @@ void startWebServer() {
             server.send(400, "text/plain", "Missing cmd");
         }
     });
+    server.on("/update", HTTP_GET, []() {
+        server.sendHeader("Connection", "close");
+        server.send_P(200, "text/html", otaUpdateHtml);
+    });
+    server.on("/update", HTTP_POST, []() {
+        server.sendHeader("Connection", "close");
+        server.send(200, "text/plain", (Update.hasError()) ? "UPDATE FAILED!" : "UPDATE SUCCESS! Rebooting...");
+        delay(1000);
+        ESP.restart();
+    }, []() {
+        HTTPUpload& upload = server.upload();
+        if (upload.status == UPLOAD_FILE_START) {
+            Serial.printf("[OTA] Flashing firmware: %s\n", upload.filename.c_str());
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+                Update.printError(Serial);
+            }
+        } else if (upload.status == UPLOAD_FILE_WRITE) {
+            if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+                Update.printError(Serial);
+            }
+        } else if (upload.status == UPLOAD_FILE_END) {
+            if (Update.end(true)) {
+                Serial.printf("[OTA] Update Success: %u bytes! Rebooting...\n", upload.totalSize);
+            } else {
+                Update.printError(Serial);
+            }
+        }
+    });
+
     server.onNotFound([]() {
         server.sendHeader("Location", "/");
         server.send(302, "text/plain", "Redirecting...");
